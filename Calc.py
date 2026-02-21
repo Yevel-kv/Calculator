@@ -7,7 +7,10 @@ class Calculadora:
         self.master = master
         self.display = tk.Entry(master, width=15, font=("Arial", 18), bd=10, insertwidth=1, bg="#6495DE", justify="right")
         self.display.grid(row=0, column=0, columnspan=4)
-
+        self.op_verification = False
+        self.current = ''
+        self.op = ''
+        self.total = 0
         row = 1
         col = 0
         
@@ -27,19 +30,69 @@ class Calculadora:
                 col = 0
                 row += 1
 
+        self.display.bind("<Key>", self.key_press)
+
+    def key_press(self, event):
+        key = event.char
+        if key == "\r":
+            self.calculate()
+            return "break"
+        elif key == "\x08":
+            self.clear_display()
+            return "break"
+        elif key == "\x1b":
+            self.master.quit()
+            return "break"
+        
+        if key:
+            self.click(key)
+            return "break"
+
     def clear_display(self):
         self.display.delete(0, tk.END)
+        self.op_verification = False
+        self.current = ''
+        self.op = ''
+        self.total = 0
 
     def calculate(self):
-        print(f"\n[!] Este metodod aun no esta implementado")
+        if self.current and self.op:
+            if self.op == "/":
+                self.total /= float(self.current)
+            if self.op == "*":
+                self.total *= float(self.current)
+            if self.op == "+":
+                self.total += float(self.current)
+            if self.op == "-":
+                self.total -= float(self.current)
 
+        self.display.delete(0, "end")
+        self.display.insert("end", round(self.total, 3))
+
+
+    def click(self, key):
+        if self.op_verification:
+            self.op_verification = False
+        
+        self.display.insert("end", key)
+        if key in "0123456789" or key == ".":
+            self.current += key
+        else:
+            if self.current:
+                if not self.op:
+                    self.total = float(self.current)
+
+            self.current = ''
+            self.op_verification = True
+            self.op = key    
+    
     def build_button(self, button, row, col):
         if button == "C":
-            b = tk.Button(self.master, text=button, width=6, command=self.clear_display)
+            b = tk.Button(self.master, text=button, width=6, command=lambda: self.clear_display())
         elif button == "=":
-            b = tk.Button(self.master, text=button, width=6, command=self.calculate)
+            b = tk.Button(self.master, text=button, width=6, command=lambda: self.calculate())
         else:
-            b = tk.Button(self.master, text=button, width=6)
+            b = tk.Button(self.master, text=button, width=6, command=lambda: self.click(button))
         b.grid(row=row, column=col)
 
 root = tk.Tk()
